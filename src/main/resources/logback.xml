@@ -1,0 +1,31 @@
+<configuration>
+
+    <!-- Appender for console output -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%highlight([%-5level] - %msg%n)</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender for file output -->
+    <appender name="GAME_LOGS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.dir}/src/main/resources/ukrainian-cities.log</file>
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${user.dir}/src/main/resources/ukrainian-cities.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="GAME_LOGS" />
+    </root>
+
+</configuration>
