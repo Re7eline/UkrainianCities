@@ -6,13 +6,17 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A simple game where the player and computer take turns naming cities that start with the last letter of the previous city.
  */
 public class GameManager {
-    private static final List<String> cities = new ArrayList<>();
+    private static final Logger logger = LoggerFactory.getLogger(GameManager.class);
     private static final Scanner sc = new Scanner(System.in);
     private static final Random random = new Random();
+    private static List<String> cities = new ArrayList<>();
 
     private static char lastChar;
     private static String lastComputerCity;
@@ -23,7 +27,7 @@ public class GameManager {
      */
 
     public void startGame() {
-        System.out.println("Hello! Choose your option \nName of city for start the game:\nExit - for close  ");
+        logger.info("\nHello! Choose your option \nName of city for start the game:\nExit - for close  ");
         fillCities();
         gameLoop();
     }
@@ -34,60 +38,41 @@ public class GameManager {
             String input = sc.nextLine();
 
             if (input.equalsIgnoreCase("exit")) {
-                System.out.println("Thanks for the game! Now you know the cities of Ukraine better");
-                System.out.println("Exiting...");
+                logger.info("Thanks for the game! Now you know the cities of Ukraine better");
+                logger.info("Exiting...");
                 System.exit(0);
             }
 
             if (input.trim().isEmpty()) {
-                System.err.println("You haven't entered a city name. Please enter the name of a city.");
+                logger.error("You haven't entered a city name. Please enter the name of a city.");
                 continue;
             }
 
             char firstInputChar = input.charAt(0);
 
             if (lastComputerCity != null && !isInputValid(firstInputChar, lastComputerCity)) {
-                System.err.println("You've entered an incorrect city.");
+                logger.error("You've entered an incorrect city.");
                 continue;
             }
 
-
             if (!isCityExists(input)) {
-                System.err.println("That city does not exist. Please type another city.");
+                logger.error("That city does not exist. Please type another city.");
                 continue;
             }
 
             lastChar = getLastChar(input);
             cities.removeIf(c -> c.equalsIgnoreCase(input));
-
             List<String> availableCities = findCitiesStartingWith(lastChar);
-            if (!availableCities.isEmpty()) {
-                String city = getRandomCity(availableCities);
-                System.out.println("Computer's city: " + city);
-                lastComputerCity = city;
 
-                cities.removeIf(c -> c.equalsIgnoreCase(city));
-                lastChar = getLastChar(city);
-            } else {
-                System.out.println("There are no more cities available for this letter.");
-                System.out.println("Do you want to play again? (y/n)");
-                String restartChoice = sc.nextLine();
-                if (restartChoice.equalsIgnoreCase("y")) {
-                    restartGame();
-                } else {
-                    System.out.println("Thanks for playing!");
-                    System.exit(0);
-                }
-            }
-
-
-            if (cities.isEmpty()) {
-                System.out.println("All available cities were used");
+            if (availableCities.isEmpty()) {
                 offerRestart();
             } else {
-                System.out.println("Enter a city starting with the letter '" + lastChar + "':");
+                getRandomCity(availableCities);
             }
 
+            if (availableCities.isEmpty()) {
+                offerRestart();
+            }
         }
     }
 
@@ -142,25 +127,11 @@ public class GameManager {
     }
 
 
-    /**
-     * Finds cities in the list that start with a specific character.
-     *
-     * @param character The character to search for at the beginning of city names.
-     * @return A list of cities starting with the specified character.
-     */
-//    private static List<String> findCitiesStartingWith(char character) {
-//        return cities.stream()
-//                .filter(city -> Character.toLowerCase(city.charAt(0)) == Character.toLowerCase(character))
-//                .collect(Collectors.toList());
-//    }
-
     private static List<String> findCitiesStartingWith(char character) {
         return cities.stream()
                 .filter(city -> Character.toLowerCase(city.charAt(0)) == Character.toLowerCase(character))
                 .collect(Collectors.toList());
     }
-
-
 
 
     /**
@@ -172,7 +143,14 @@ public class GameManager {
     private static String getRandomCity(List<String> citiesList) {
         int randomIndex = random.nextInt(citiesList.size());
         String city = citiesList.get(randomIndex);
+
+        citiesList.removeIf(c -> c.equalsIgnoreCase(city));
         cities.removeIf(c -> c.equalsIgnoreCase(city));
+
+        logger.info("Computer's city: " + city);
+        lastComputerCity = city;
+        lastChar = getLastChar(city);
+
         return city;
     }
 
@@ -184,24 +162,25 @@ public class GameManager {
         fillCities();
         lastComputerCity = null;
         lastChar = ' ';
-        System.out.println("Let's start a new game! Enter a city to begin:");
+        logger.info("Let's start a new game! Enter a city to begin:");
     }
 
     private static void offerRestart() {
-        System.out.println("No more available cities starting with the letter '" + lastChar + "'.");
-        System.out.println("Do you want to play again? (y/n)");
+        logger.info("No more available cities starting with the letter '" + lastChar + "'.");
+        logger.info("Do you want to play again? (y/n)");
         String restartChoice = sc.nextLine();
         if (restartChoice.equalsIgnoreCase("y")) {
             restartGame();
         } else {
-            System.out.println("Thanks for the game! Now you know the cities of Ukraine better");
+            logger.info("Thanks for the game! Now you know the cities of Ukraine better");
+            logger.info("Exiting...");
             System.exit(0);
         }
     }
 
 
     /**
-     * Fills the list of cities with predefined city names.
+     * Fills the list of cities with predefined city names from cities.txt.
      */
     private static void fillCities() {
         try {
@@ -219,7 +198,7 @@ public class GameManager {
 
             scanner.close();
         } catch (Exception e) {
-            System.err.println("Ошибка при чтении файла 'cities.txt': " + e.getMessage());
+            logger.error("Error while reading file 'cities.txt': " + e.getMessage());
             System.exit(1);
         }
     }
